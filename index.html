@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Book Reader</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Georgia', serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        /* Book List View */
+        .book-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .book-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 3px solid transparent;
+            position: relative;
+        }
+
+        .book-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+            border-color: #667eea;
+        }
+
+        .language-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+
+        .book-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+
+        .book-author {
+            color: #7f8c8d;
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+        }
+
+        .book-description {
+            color: #34495e;
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+
+        /* Reader View */
+        .reader-view {
+            display: none;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .reader-header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .back-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .reader-title {
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+
+        .reader-content {
+            padding: 40px;
+            line-height: 1.8;
+            font-size: 1.2rem;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        .sentence {
+            display: inline;
+            padding: 2px 4px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .sentence.active {
+            background: linear-gradient(120deg, #a8edea 0%, #fed6e3 100%);
+            color: #2c3e50;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .sentence:hover {
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        /* Audio Controls */
+        .audio-controls {
+            background: #f8f9fa;
+            padding: 20px;
+            border-top: 1px solid #e9ecef;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .control-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .control-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .control-btn:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .progress-info {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .book-list {
+                grid-template-columns: 1fr;
+            }
+
+            .reader-content {
+                padding: 20px;
+                font-size: 1.1rem;
+            }
+
+            .audio-controls {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>📚 Audio Book Reader</h1>
+        <p>Immerse yourself in synchronized reading and listening</p>
+    </div>
+
+    <!-- Book List View -->
+    <div id="bookList" class="book-list">
+        <!-- Books will be populated by JavaScript -->
+    </div>
+
+    <!-- Reader View -->
+    <div id="readerView" class="reader-view">
+        <div class="reader-header">
+            <button class="back-btn" onclick="showBookList()">← Back to Library</button>
+            <div class="reader-title" id="readerTitle"></div>
+            <div></div>
+        </div>
+
+        <div class="reader-content" id="readerContent">
+            <!-- Book content will be loaded here -->
+        </div>
+
+        <div class="audio-controls">
+            <button class="control-btn" id="playPauseBtn" onclick="togglePlayPause()">
+                ▶️ Start Reading
+            </button>
+            <button class="control-btn" id="prevBtn" onclick="previousSentence()">
+                ⏮️ Previous
+            </button>
+            <button class="control-btn" id="nextBtn" onclick="nextSentence()">
+                ⏭️ Next
+            </button>
+            <div class="progress-info" id="progressInfo">
+                Ready to start
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Books will be loaded from external files
+    let books = [];
+
+    let currentBook = null;
+    let sentences = [];
+    let currentSentenceIndex = 0;
+    let isPlaying = false;
+    let currentAudio = null;
+
+    // Initialize the app
+    async function init() {
+        await loadBooks();
+        displayBooks();
+    }
+
+    // Load books from external files
+    async function loadBooks() {
+        try {
+            // Load the book index file
+            const response = await fetch('books.json');
+            if (!response.ok) {
+                throw new Error('Could not load books.json');
+            }
+            const bookIndex = await response.json();
+
+            // Load each book's content
+            books = await Promise.all(
+                bookIndex.map(async (bookInfo) => {
+                    try {
+                        const contentResponse = await fetch(bookInfo.contentFile);
+                        if (!contentResponse.ok) {
+                            throw new Error(`Could not load ${bookInfo.contentFile}`);
+                        }
+                        const content = await contentResponse.text();
+
+                        return {
+                            ...bookInfo,
+                            content: content
+                        };
+                    } catch (error) {
+                        console.error(`Error loading book ${bookInfo.title}:`, error);
+                        return {
+                            ...bookInfo,
+                            content: `Error loading content for "${bookInfo.title}". Please check that the file ${bookInfo.contentFile} exists.`
+                        };
+                    }
+                })
+            );
+
+            console.log(`Loaded ${books.length} books successfully`);
+        } catch (error) {
+            console.error('Error loading books:', error);
+            // Fallback: show error message
+            books = [{
+                id: 1,
+                title: "Error Loading Books",
+                author: "System",
+                description: "Could not load books.json. Please ensure the file exists in your repository",
+                language: "en-US",
+                content: "Please create a books.json file with your book list and individual content files."
+            }];
+        }
+    }
+
+    // Books will be loaded from external files
+    let books = [];
+
+    // Display the book list
+    function displayBooks() {
+        const bookList = document.getElementById('bookList');
+        bookList.innerHTML = '';
+
+        books.forEach(book => {
+            const bookCard = document.createElement('div');
+            bookCard.className = 'book-card';
+            bookCard.onclick = () => openBook(book);
+
+            const languageFlag = book.language === 'fr-FR' ? '🇫🇷' : '🇺🇸';
+            const languageLabel = book.language === 'fr-FR' ? 'FR' : 'EN';
+
+            bookCard.innerHTML = `
+                    <div class="language-badge">${languageFlag} ${languageLabel}</div>
+                    <div class="book-title">${book.title}</div>
+                    <div class="book-author">by ${book.author}</div>
+                    <div class="book-description">${book.description}</div>
+                `;
+
+            bookList.appendChild(bookCard);
+        });
+    }
+
+    // Open a book for reading
+    function openBook(book) {
+        currentBook = book;
+        currentSentenceIndex = 0;
+
+        // Split content into sentences
+        sentences = book.content.match(/[^\.!?]+[\.!?]+/g) || [];
+        sentences = sentences.map(s => s.trim()).filter(s => s.length > 0);
+
+        // Update UI
+        document.getElementById('readerTitle').textContent = book.title;
+        document.getElementById('bookList').style.display = 'none';
+        document.getElementById('readerView').style.display = 'block';
+
+        // Display content with sentence spans
+        displayContent();
+        updateProgress();
+    }
+
+    // Display content with clickable sentences
+    function displayContent() {
+        const content = document.getElementById('readerContent');
+        content.innerHTML = '';
+
+        sentences.forEach((sentence, index) => {
+            const span = document.createElement('span');
+            span.className = 'sentence';
+            span.textContent = sentence + ' ';
+            span.onclick = () => goToSentence(index);
+            content.appendChild(span);
+        });
+    }
+
+    // Go back to book list
+    function showBookList() {
+        stopAudio();
+        document.getElementById('readerView').style.display = 'none';
+        document.getElementById('bookList').style.display = 'grid';
+        resetPlayer();
+    }
+
+    // Toggle play/pause
+    function togglePlayPause() {
+        if (isPlaying) {
+            pauseReading();
+        } else {
+            startReading();
+        }
+    }
+
+    // Start reading
+    function startReading() {
+        if (sentences.length === 0) return;
+
+        isPlaying = true;
+        document.getElementById('playPauseBtn').innerHTML = '⏸️ Pause Reading';
+        highlightCurrentSentence();
+        playCurrentSentence();
+    }
+
+    // Pause reading
+    function pauseReading() {
+        isPlaying = false;
+        document.getElementById('playPauseBtn').innerHTML = '▶️ Resume Reading';
+        stopAudio();
+    }
+
+    // Play current sentence
+    function playCurrentSentence() {
+        if (!isPlaying || currentSentenceIndex >= sentences.length) return;
+
+        const sentence = sentences[currentSentenceIndex];
+
+        // Use Web Speech API with proper language support
+        if ('speechSynthesis' in window) {
+            const utterance = new SpeechSynthesisUtterance(sentence);
+            utterance.rate = 0.8;
+            utterance.pitch = 1;
+            utterance.volume = 0.8;
+
+            // Set language based on book language
+            if (currentBook && currentBook.language) {
+                utterance.lang = currentBook.language;
+            }
+
+            // Try to find a voice that matches the language
+            const voices = speechSynthesis.getVoices();
+            if (voices.length > 0 && currentBook && currentBook.language) {
+                const preferredVoice = voices.find(voice =>
+                    voice.lang.startsWith(currentBook.language.split('-')[0])
+                );
+                if (preferredVoice) {
+                    utterance.voice = preferredVoice;
+                }
+            }
+
+            utterance.onend = () => {
+                if (isPlaying) {
+                    nextSentence();
+                }
+            };
+
+            utterance.onerror = (event) => {
+                console.error('Speech synthesis error:', event);
+                // Continue to next sentence on error
+                if (isPlaying) {
+                    setTimeout(() => nextSentence(), 1000);
+                }
+            };
+
+            speechSynthesis.speak(utterance);
+            currentAudio = utterance;
+        } else {
+            // Fallback: simulate with timeout
+            const duration = Math.max(2000, sentence.length * 50);
+            setTimeout(() => {
+                if (isPlaying) {
+                    nextSentence();
+                }
+            }, duration);
+        }
+
+        updateProgress();
+    }
+
+    // Stop current audio
+    function stopAudio() {
+        if (currentAudio && 'speechSynthesis' in window) {
+            speechSynthesis.cancel();
+        }
+        currentAudio = null;
+    }
+
+    // Highlight current sentence
+    function highlightCurrentSentence() {
+        // Remove previous highlighting
+        document.querySelectorAll('.sentence').forEach(s => s.classList.remove('active'));
+
+        // Highlight current sentence
+        const sentenceElements = document.querySelectorAll('.sentence');
+        if (sentenceElements[currentSentenceIndex]) {
+            sentenceElements[currentSentenceIndex].classList.add('active');
+            sentenceElements[currentSentenceIndex].scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+            });
+        }
+    }
+
+    // Go to next sentence
+    function nextSentence() {
+        if (currentSentenceIndex < sentences.length - 1) {
+            currentSentenceIndex++;
+            highlightCurrentSentence();
+            if (isPlaying) {
+                playCurrentSentence();
+            }
+        } else {
+            // End of book
+            pauseReading();
+            document.getElementById('progressInfo').textContent = 'Book completed!';
+        }
+    }
+
+    // Go to previous sentence
+    function previousSentence() {
+        if (currentSentenceIndex > 0) {
+            stopAudio();
+            currentSentenceIndex--;
+            highlightCurrentSentence();
+            if (isPlaying) {
+                playCurrentSentence();
+            }
+        }
+    }
+
+    // Go to specific sentence
+    function goToSentence(index) {
+        stopAudio();
+        currentSentenceIndex = index;
+        highlightCurrentSentence();
+        if (isPlaying) {
+            playCurrentSentence();
+        }
+    }
+
+    // Update progress information
+    function updateProgress() {
+        const progress = document.getElementById('progressInfo');
+        const current = currentSentenceIndex + 1;
+        const total = sentences.length;
+        const percentage = Math.round((current / total) * 100);
+
+        progress.textContent = `Sentence ${current} of ${total} (${percentage}%)`;
+    }
+
+    // Reset player state
+    function resetPlayer() {
+        isPlaying = false;
+        currentSentenceIndex = 0;
+        sentences = [];
+        currentBook = null;
+        document.getElementById('playPauseBtn').innerHTML = '▶️ Start Reading';
+        document.getElementById('progressInfo').textContent = 'Ready to start';
+    }
+
+    // Initialize the app when page loads
+    window.onload = init;
+</script>
+</body>
+</html>

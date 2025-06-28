@@ -1,0 +1,26 @@
+[
+  {
+    "id": 1,
+    "title": "The Great Adventure",
+    "author": "Jane Smith",
+    "description": "An epic journey through mysterious lands filled with wonder and discovery.",
+    "language": "en-US",
+    "contentFile": "book1.txt"
+  },
+  {
+    "id": 2,
+    "title": "Le Petit Prince",
+    "author": "Antoine de Saint-Exupéry",
+    "description": "Une histoire intemporelle sur l'amitié, l'amour et la découverte de soi.",
+    "language": "fr-FR",
+    "contentFile": "book2.txt"
+  },
+  {
+    "id": 3,
+    "title": "City of Tomorrow",
+    "author": "Alex Future",
+    "description": "A vision of urban life in the year 2050, where technology and humanity merge.",
+    "language": "en-US",
+    "contentFile": "book3.txt"
+  }
+]
