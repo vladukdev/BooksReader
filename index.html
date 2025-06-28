@@ -427,7 +427,6 @@
 
             this.state.isPlaying = true;
             document.getElementById('playPauseBtn').innerHTML = '⏸️ Pause Reading';
-            this.highlightCurrentSentence();
             this.playCurrentSentence();
         },
 
@@ -441,6 +440,10 @@
         // Play current sentence
         playCurrentSentence() {
             if (!this.state.isPlaying || this.state.currentSentenceIndex >= this.state.sentences.length) return;
+
+            // Highlight FIRST, then play audio
+            this.highlightCurrentSentence();
+            this.updateProgress();
 
             const sentence = this.state.sentences[this.state.currentSentenceIndex];
 
@@ -487,8 +490,6 @@
                     }
                 }, duration);
             }
-
-            this.updateProgress();
         },
 
         // Stop current audio
@@ -517,9 +518,11 @@
         nextSentence() {
             if (this.state.currentSentenceIndex < this.state.sentences.length - 1) {
                 this.state.currentSentenceIndex++;
-                this.highlightCurrentSentence();
                 if (this.state.isPlaying) {
                     this.playCurrentSentence();
+                } else {
+                    this.highlightCurrentSentence();
+                    this.updateProgress();
                 }
             } else {
                 this.pauseReading();
@@ -532,9 +535,11 @@
             if (this.state.currentSentenceIndex > 0) {
                 this.stopAudio();
                 this.state.currentSentenceIndex--;
-                this.highlightCurrentSentence();
                 if (this.state.isPlaying) {
                     this.playCurrentSentence();
+                } else {
+                    this.highlightCurrentSentence();
+                    this.updateProgress();
                 }
             }
         },
@@ -543,9 +548,11 @@
         goToSentence(index) {
             this.stopAudio();
             this.state.currentSentenceIndex = index;
-            this.highlightCurrentSentence();
             if (this.state.isPlaying) {
                 this.playCurrentSentence();
+            } else {
+                this.highlightCurrentSentence();
+                this.updateProgress();
             }
         },
 
